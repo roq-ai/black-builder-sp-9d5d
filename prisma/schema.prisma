@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model collaborator {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description          String?                @db.VarChar(255)
+  image                String?                @db.VarChar(255)
+  name                 String                 @db.VarChar(255)
+  created_at           DateTime               @default(now()) @db.Timestamp(6)
+  updated_at           DateTime               @default(now()) @db.Timestamp(6)
+  user_id              String                 @db.Uuid
+  tenant_id            String                 @db.VarChar(255)
+  user                 user                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project_collaborator project_collaborator[]
+}
+
+model event {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String           @db.VarChar(255)
+  description    String?          @db.VarChar(255)
+  date           DateTime         @db.Date
+  created_at     DateTime         @default(now()) @db.Timestamp(6)
+  updated_at     DateTime         @default(now()) @db.Timestamp(6)
+  event_attendee event_attendee[]
+}
+
+model event_attendee {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id   String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  event      event    @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user       user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model mentorship {
+  id                              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mentor_id                       String   @db.Uuid
+  mentee_id                       String   @db.Uuid
+  created_at                      DateTime @default(now()) @db.Timestamp(6)
+  updated_at                      DateTime @default(now()) @db.Timestamp(6)
+  user_mentorship_mentee_idTouser user     @relation("mentorship_mentee_idTouser", fields: [mentee_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_mentorship_mentor_idTouser user     @relation("mentorship_mentor_idTouser", fields: [mentor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model profile {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  skills     String?  @db.VarChar(255)
+  expertise  String?  @db.VarChar(255)
+  interests  String?  @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  user       user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model project {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                 String                 @db.VarChar(255)
+  description          String?                @db.VarChar(255)
+  entrepreneur_id      String                 @db.Uuid
+  created_at           DateTime               @default(now()) @db.Timestamp(6)
+  updated_at           DateTime               @default(now()) @db.Timestamp(6)
+  user                 user                   @relation(fields: [entrepreneur_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project_collaborator project_collaborator[]
+}
+
+model project_collaborator {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id      String       @db.Uuid
+  collaborator_id String       @db.Uuid
+  created_at      DateTime     @default(now()) @db.Timestamp(6)
+  updated_at      DateTime     @default(now()) @db.Timestamp(6)
+  collaborator    collaborator @relation(fields: [collaborator_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project         project      @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                                    String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                                 String           @unique @db.VarChar(255)
+  firstName                             String?          @db.VarChar(255)
+  lastName                              String?          @db.VarChar(255)
+  roq_user_id                           String           @db.VarChar(255)
+  tenant_id                             String           @db.VarChar(255)
+  created_at                            DateTime         @default(now()) @db.Timestamp(6)
+  updated_at                            DateTime         @default(now()) @db.Timestamp(6)
+  collaborator                          collaborator[]
+  event_attendee                        event_attendee[]
+  mentorship_mentorship_mentee_idTouser mentorship[]     @relation("mentorship_mentee_idTouser")
+  mentorship_mentorship_mentor_idTouser mentorship[]     @relation("mentorship_mentor_idTouser")
+  profile                               profile[]
+  project                               project[]
+}
